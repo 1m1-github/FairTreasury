@@ -1,0 +1,213 @@
+// CODE NOT WORKING YET - WORK IN PROGRESS - IN GIT ONLY FOR SAFETY
+
+#pragma version 6
+
+txn OnCompletion
+int NoOp
+==
+bnz handle_noop
+
+txn OnCompletion
+int OptIn
+==
+bnz handle_optin
+
+txn OnCompletion
+int CloseOut
+==
+bnz handle_closeout
+
+txn OnCompletion
+int UpdateApplication
+==
+bnz handle_updateapp
+
+txn OnCompletion
+int DeleteApplication
+==
+bnz handle_deleteapp
+
+// Unexpected OnCompletion value. Should be unreachable.
+b decline
+////////////////
+
+
+////////////////
+handle_noop:
+
+txna ApplicationArgs 0
+byte "update"
+==
+bnz handle_update
+
+txna ApplicationArgs 0
+byte "swap"
+==
+bnz handle_swap
+
+// Unexpected first arg
+b decline
+////////////////
+
+///////////////
+// update
+// only creator can update
+// args: update ASA_1 w_1 ASA_2 w_2 ...
+// overwrite global[ASA_i] = w_i
+// assert sum w_i == 1
+// if global[ASA_i] does not exist yet, set global[ASA_i] = w_i if global state space available
+handle_update:
+
+// only creator 
+global CreatorAddress
+txn Sender
+==
+assert
+
+// only 1 txn in group
+global GroupSize
+int 1
+==
+assert
+
+// loop through all args to update global state
+// loop through all weights (w_i) to assert that sum w_i == 1
+// NumAppArgs
+
+b approve
+///////////////
+
+///////////////
+// swap
+// args: swap coin_o
+// group of 2: 1st send A_i amount of coin i / 2nd app call here to trigger txn to send A_o of coin o to sender
+// 
+handle_swap:
+
+// 2 txns in group
+global GroupSize
+int 2
+==
+assert
+
+// this txn is 2nd txn in group
+txn GroupIndex
+int 1
+==
+assert
+
+// ASA id
+int 0
+gtxns XferAsset
+
+// balance of coin_i
+int 1 // acc 1 is SC account
+int ASA_ID // ASA id
+asset_holding_get AssetBalance // stack, balance, opted-in
+
+// assert that we are opted into coin_i
+int 1
+==
+assert
+
+store 0 // balance of coin_i
+
+// balance of coin_o
+int 1 // acc 1 is SC account
+txna ApplicationArgs 1 // coin_o ASA id
+asset_holding_get AssetBalance // stack, balance, opted-in
+
+// assert that we are opted into coin_o
+int 1
+==
+assert
+
+store 1 // balance of coin_o
+
+// weight of coin_i
+int 0
+gtxns XferAsset
+app_global_get_ex // stack, weight, key exists
+
+// assert that we have weight for this ASA
+int 1
+==
+assert
+
+store 2 // weight coin_i
+
+// weight of coin_o
+int 0
+txna ApplicationArgs 1 // coin_o ASA id
+app_global_get_ex // stack, weight, key exists
+
+// assert that we have weight for this ASA
+int 1
+==
+assert
+
+store 3 // weight coin_o
+
+// coin_i amount - TODO ALGO case - TODO remove swap fee
+int 0
+gtxns AssetAmount
+store 4
+
+// calc coin_o amount
+int 1
+load 0
+load 4
++
+load 0
+/
+load 2
+load 3
+/
+exp
+-
+load 1
+*
+
+// TODO send coin_o
+
+b approve
+///////////////
+
+///////////////
+// Update only by creator - for now
+// TODO maybe make updating impossible for safety and assurance
+handle_updateapp:
+
+global GroupSize
+int 1
+==
+global CreatorAddress
+txn Sender
+==
+&&
+bnz approve
+b decline
+///////////////
+
+///////////////
+// handle closeOut, cannot delete app, no decline
+handle_closeout:
+handle_deleteapp:
+b decline
+///////////////
+
+///////////////
+handle_optin:
+b approve
+///////////////
+
+////////////////
+// end branches
+decline:
+int 0
+return
+
+approve:
+int 1
+return
+////////////////
