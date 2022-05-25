@@ -55,18 +55,131 @@ byte "swap"
 bnz handle_swap
 
 txna ApplicationArgs 0
-byte "send"
+byte "withdraw"
 ==
-bnz handle_send
+bnz handle_withdraw
+
+txna ApplicationArgs 0
+byte "optin"
+==
+bnz handle_optin_asa
 
 // Unexpected first arg
 b decline
 ////////////////
 
+
+
+
+///////////////
+// swap
+// args: swap coin_o
+// group of 2: 1st send A_i amount of coin i / 2nd app call here to trigger txn to send A_o of coin o to sender
+// 
+handle_swap:
+
+// 2 txns in group
+// global GroupSize
+// int 2
+// ==
+// assert
+
+// // this txn is 2nd txn in group
+// txn GroupIndex
+// int 1
+// ==
+// assert
+
+// // ASA id
+// int 0
+// gtxns XferAsset
+// store 12
+
+// // balance of coin_i
+// load 12
+// bz sc_balance_algo
+
+// // int 1 // acc 1 is SC account
+// // int ASA_ID // ASA id
+// // asset_holding_get AssetBalance // stack, balance, opted-in
+
+// // assert that we are opted into coin_i
+// int 1
+// ==
+// assert
+
+// store 0 // balance of coin_i
+
+// // balance of coin_o
+// int 1 // acc 1 is SC account
+// txna ApplicationArgs 1 // coin_o ASA id
+// asset_holding_get AssetBalance // stack, balance, opted-in
+
+// // assert that we are opted into coin_o
+// int 1
+// ==
+// assert
+
+// store 1 // balance of coin_o
+
+// // weight of coin_i
+// int 0
+// gtxns XferAsset
+// app_global_get_ex // stack, weight, key exists
+
+// // assert that we have weight for this ASA
+// int 1
+// ==
+// assert
+
+// store 2 // weight coin_i
+
+// // weight of coin_o
+// int 0
+// txna ApplicationArgs 1 // coin_o ASA id
+// app_global_get_ex // stack, weight, key exists
+
+// // assert that we have weight for this ASA
+// int 1
+// ==
+// assert
+
+// store 3 // weight coin_o
+
+// // coin_i amount - TODO ALGO case - TODO remove swap fee
+// int 0
+// gtxns AssetAmount
+// store 4
+
+// // calc coin_o amount
+// int 1
+// load 0
+// load 4
+// +
+// load 0
+// /
+// load 2
+// load 3
+// /
+// exp
+// -
+// load 1
+// *
+
+// TODO send coin_o
+
+b approve
+///////////////
+
+
+
+
+
+
 ////////////////
-// send coins from SC to another account
+// withdraw coins from SC to creator
 // only creator
-handle_send:
+handle_withdraw:
 b decline
 ////////////////
 
@@ -257,100 +370,34 @@ b approve
 ///////////////
 
 ///////////////
-// swap
-// args: swap coin_o
-// group of 2: 1st send A_i amount of coin i / 2nd app call here to trigger txn to send A_o of coin o to sender
-// 
-handle_swap:
+// optin SC to ASA
+handle_optin_asa:
 
-// 2 txns in group
-// global GroupSize
-// int 2
-// ==
-// assert
+global CreatorAddress
+txn Sender
+==
+assert
 
-// // this txn is 2nd txn in group
-// txn GroupIndex
-// int 1
-// ==
-// assert
+global GroupSize
+int 1
+==
+assert
 
-// // ASA id
-// int 0
-// gtxns XferAsset
-
-// // balance of coin_i
-// int 1 // acc 1 is SC account
-// int ASA_ID // ASA id
-// asset_holding_get AssetBalance // stack, balance, opted-in
-
-// // assert that we are opted into coin_i
-// int 1
-// ==
-// assert
-
-// store 0 // balance of coin_i
-
-// // balance of coin_o
-// int 1 // acc 1 is SC account
-// txna ApplicationArgs 1 // coin_o ASA id
-// asset_holding_get AssetBalance // stack, balance, opted-in
-
-// // assert that we are opted into coin_o
-// int 1
-// ==
-// assert
-
-// store 1 // balance of coin_o
-
-// // weight of coin_i
-// int 0
-// gtxns XferAsset
-// app_global_get_ex // stack, weight, key exists
-
-// // assert that we have weight for this ASA
-// int 1
-// ==
-// assert
-
-// store 2 // weight coin_i
-
-// // weight of coin_o
-// int 0
-// txna ApplicationArgs 1 // coin_o ASA id
-// app_global_get_ex // stack, weight, key exists
-
-// // assert that we have weight for this ASA
-// int 1
-// ==
-// assert
-
-// store 3 // weight coin_o
-
-// // coin_i amount - TODO ALGO case - TODO remove swap fee
-// int 0
-// gtxns AssetAmount
-// store 4
-
-// // calc coin_o amount
-// int 1
-// load 0
-// load 4
-// +
-// load 0
-// /
-// load 2
-// load 3
-// /
-// exp
-// -
-// load 1
-// *
-
-// TODO send coin_o
+itxn_begin
+int axfer
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field AssetAmount
+txn Assets 0
+itxn_field XferAsset
+itxn_submit
 
 b approve
 ///////////////
+
+
 
 ///////////////
 // Update only by creator - for now
@@ -360,12 +407,14 @@ handle_deleteapp:
 global GroupSize
 int 1
 ==
+assert
+
 global CreatorAddress
 txn Sender
 ==
-&&
-bnz approve
-b decline
+assert
+
+b approve
 ///////////////
 
 ///////////////

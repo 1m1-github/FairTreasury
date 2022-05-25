@@ -12,15 +12,22 @@ export SYSTEM_ID=92065044
 export SYSTEM_ACCOUNT=D5CHP2N2ZH4DW7MJIJT3AXIIV2XYCCZHP5CZJIWRPENDEEBPV53CTELJ64
 export N=3
 export ASA=91697272
+export A=NVVMVMEFGTLIVW3YL6R7ADZAWU66HUBNHI6OH264U5YKVZVPG67EMB5EWM
 
 goal app create --creator $CREATOR --approval-prog $SYSTEM_APPROVAL_FILE --clear-prog $SYSTEM_CLEAR_FILE --global-byteslices $N --global-ints $(($N+1)) --local-byteslices 0 --local-ints 0 --extra-pages 0 --on-completion OptIn -w $WALLET
 goal app info --app-id $SYSTEM_ID
 
 goal asset create --creator $CREATOR --total 1000000000 --unitname NOVALUE --decimals 0 -w $WALLET
 goal app optin --app-id $SYSTEM_ID --from $A -w $WALLET
+goal asset send -a 0 --assetid $ASA -f $SYSTEM_ACCOUNT -t $SYSTEM_ACCOUNT -w $WALLET
 goal app delete --app-id $SYSTEM_ID --from $CREATOR
 
 goal app update --app-id=$SYSTEM_ID --from=$CREATOR --approval-prog $SYSTEM_APPROVAL_FILE --clear-prog $SYSTEM_CLEAR_FILE -w $WALLET
+
+// optin
+goal app call --from=$CREATOR --app-id=$SYSTEM_ID --foreign-asset $ASA --app-arg="str:optin" --app-arg="int:$ASA" -w $WALLET --out=$TXNS_DIR/optin.stxn
+goal clerk dryrun -t $TXNS_DIR/optin.stxn --dryrun-dump -o $TXNS_DIR/optin_dryrun.json
+tealdbg debug $SYSTEM_APPROVAL_FILE -d $TXNS_DIR/optin_dryrun.json
 
 // update
 goal app call --from=$CREATOR --app-id=$SYSTEM_ID --app-arg="str:update" --app-arg="str:0" --app-arg="int:4000" --app-arg="str:$ASA" --app-arg="int:3000" --app-arg="str:23" --app-arg="int:3000" -w $WALLET
