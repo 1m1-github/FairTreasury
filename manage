@@ -19,31 +19,39 @@ goal app info --app-id $SYSTEM_ID
 
 goal asset create --creator $CREATOR --total 1000000000 --unitname NOVALUE --decimals 0 -w $WALLET
 goal app optin --app-id $SYSTEM_ID --from $A -w $WALLET
-goal asset send -a 0 --assetid $ASA -f $SYSTEM_ACCOUNT -t $SYSTEM_ACCOUNT -w $WALLET
-goal app delete --app-id $SYSTEM_ID --from $CREATOR
+goal asset send -a 20 --assetid $ASA -f $CREATOR -t $SYSTEM_ACCOUNT -w $WALLET
+goal asset send -a 0 --assetid $ASA -f $A -t $A -w $WALLET
 
+goal app delete --app-id $SYSTEM_ID --from $CREATOR
 goal app update --app-id=$SYSTEM_ID --from=$CREATOR --approval-prog $SYSTEM_APPROVAL_FILE --clear-prog $SYSTEM_CLEAR_FILE -w $WALLET
 
 // optin
-goal app call --from=$CREATOR --app-id=$SYSTEM_ID --foreign-asset $ASA --app-arg="str:optin" --app-arg="int:$ASA" -w $WALLET --out=$TXNS_DIR/optin.stxn
+goal app call --from=$CREATOR --app-id=$SYSTEM_ID --app-arg="str:optin" --foreign-asset $ASA -w $WALLET --out=$TXNS_DIR/optin.stxn
 goal clerk dryrun -t $TXNS_DIR/optin.stxn --dryrun-dump -o $TXNS_DIR/optin_dryrun.json
 tealdbg debug $SYSTEM_APPROVAL_FILE -d $TXNS_DIR/optin_dryrun.json
 
-// update
-goal app call --from=$CREATOR --app-id=$SYSTEM_ID --app-arg="str:update" --app-arg="str:0" --app-arg="int:4000" --app-arg="str:$ASA" --app-arg="int:3000" --app-arg="str:23" --app-arg="int:3000" -w $WALLET
-goal app call --from=$CREATOR --app-id=$SYSTEM_ID --app-arg="str:update" --app-arg="str:0" --app-arg="int:5000" --app-arg="str:$ASA" --app-arg="int:5000" -w $WALLET --out=$TXNS_DIR/update.stxn
+// update - first asset is dao token - rest are ccy tokens - all swaps are dao vs ccy
+goal app call --from=$CREATOR --app-id=$SYSTEM_ID --app-arg="str:update" --foreign-asset $ASA --foreign-asset 0 --app-arg="int:5000" --app-arg="int:5000" -w $WALLET --out=$TXNS_DIR/update.stxn
 goal clerk dryrun -t $TXNS_DIR/update.stxn --dryrun-dump -o $TXNS_DIR/update_dryrun.json
 tealdbg debug $SYSTEM_APPROVAL_FILE -d $TXNS_DIR/update_dryrun.json
 
-// swap
-chrome://inspect/#devices
-goal clerk send --from=$A --to=$SYSTEM_ACCOUNT --amount=1 --out=$TXNS_DIR/send.txn -w $WALLET
-goal app call --from=$A --app-id=$SYSTEM_ID --app-arg="str:swap" --out=$TXNS_DIR/state.txn -w $WALLET
-cat $TXNS_DIR/send.txn $TXNS_DIR/state.txn > $TXNS_DIR/combinedtransactions.txn
+// swap ALGO->ASA
+goal clerk send --from=$A --to=$SYSTEM_ACCOUNT --amount=1000000 --out=$TXNS_DIR/swap_send.txn -w $WALLET
+goal app call --from=$A --app-id=$SYSTEM_ID --app-arg="str:swap" --foreign-asset $ASA --out=$TXNS_DIR/swap_call.txn -w $WALLET
+cat $TXNS_DIR/swap_send.txn $TXNS_DIR/swap_call.txn > $TXNS_DIR/combinedtransactions.txn
 goal clerk group --infile $TXNS_DIR/combinedtransactions.txn --outfile $TXNS_DIR/groupedtransactions.txn
-goal clerk sign --infile $TXNS_DIR/groupedtransactions.txn --outfile $TXNS_DIR/swap.stxn
-goal clerk dryrun -t $TXNS_DIR/swap.stxn --dryrun-dump -o $TXNS_DIR/dr.json
-tealdbg debug $SYSTEM_APPROVAL_FILE -d $TXNS_DIR/dr.json --group-index 1
+goal clerk sign --infile $TXNS_DIR/groupedtransactions.txn --outfile $TXNS_DIR/swap.stxn -w $WALLET
+goal clerk dryrun -t $TXNS_DIR/swap.stxn --dryrun-dump -o $TXNS_DIR/swap_dryrun.json
+tealdbg debug $SYSTEM_APPROVAL_FILE -d $TXNS_DIR/swap_dryrun.json --group-index 1
+
+// swap ASA->ALGO
+goal asset send --assetid=$ASA --from=$A --to=$SYSTEM_ACCOUNT --amount=2 --out=$TXNS_DIR/swap_send.txn -w $WALLET
+goal app call --from=$A --app-id=$SYSTEM_ID --app-arg="str:swap" --foreign-asset 0 --out=$TXNS_DIR/swap_call.txn -w $WALLET
+cat $TXNS_DIR/swap_send.txn $TXNS_DIR/swap_call.txn > $TXNS_DIR/combinedtransactions.txn
+goal clerk group --infile $TXNS_DIR/combinedtransactions.txn --outfile $TXNS_DIR/groupedtransactions.txn
+goal clerk sign --infile $TXNS_DIR/groupedtransactions.txn --outfile $TXNS_DIR/swap.stxn -w $WALLET
+goal clerk dryrun -t $TXNS_DIR/swap.stxn --dryrun-dump -o $TXNS_DIR/swap_dryrun.json
+tealdbg debug $SYSTEM_APPROVAL_FILE -d $TXNS_DIR/swap_dryrun.json --group-index 1
 
 // read
 goal app read --app-id=$SYSTEM_ID --global

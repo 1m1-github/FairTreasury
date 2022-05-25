@@ -2,12 +2,16 @@
 
 // scratch
 // 10 - loop ix
-// 11 - ApplicationArgs ix
-// 12 - ASA id
+// 12 - ASA id i
 // 13 - ASA w
 // 14 - sum w
 // 15 - n
 // 16 - ni
+// 17 - ASA id o
+// 0 - balance i
+// 1 - balance o
+// 2 - weight i
+// 3 - weight o
 
 #pragma version 6
 
@@ -79,38 +83,80 @@ b decline
 handle_swap:
 
 // 2 txns in group
-// global GroupSize
-// int 2
-// ==
-// assert
+global GroupSize
+int 2
+==
+assert
 
-// // this txn is 2nd txn in group
-// txn GroupIndex
-// int 1
-// ==
-// assert
+// this txn is 2nd txn in group
+txn GroupIndex
+int 1
+==
+assert
 
-// // ASA id
-// int 0
-// gtxns XferAsset
-// store 12
+// ASA id and balance of coin_i
+gtxn 0 TypeEnum
+dup
+int pay
+==
+bnz handle_swap_balance_i_algo
+int axfer
+==
+bnz handle_swap_balance_i_asa
+b decline // not pay nor axfer is error
 
-// // balance of coin_i
-// load 12
-// bz sc_balance_algo
+handle_swap_balance_i_algo:
 
-// // int 1 // acc 1 is SC account
-// // int ASA_ID // ASA id
-// // asset_holding_get AssetBalance // stack, balance, opted-in
+pop // pop the dup
 
-// // assert that we are opted into coin_i
-// int 1
-// ==
-// assert
+// ASA id i
+int 0
+store 12
 
-// store 0 // balance of coin_i
+// balance i
+global CurrentApplicationAddress
+balance
+store 0
 
-// // balance of coin_o
+// ASA id o
+txna Assets 0
+store 17
+
+// balance o
+global CurrentApplicationAddress
+load 17
+asset_holding_get AssetBalance
+store 1
+
+// weight i
+load 12
+app_global_get
+store 2
+
+// weight o
+load 17
+app_global_get
+store 3
+
+b handle_swap_continue
+
+handle_swap_balance_i_asa:
+
+// ASA id
+gtxn 0 XferAsset
+store 12
+
+// balance i
+global CurrentApplicationAddress
+load 12
+asset_holding_get AssetBalance
+store 0
+
+b handle_swap_continue
+
+handle_swap_continue:
+
+// balance of coin_o
 // int 1 // acc 1 is SC account
 // txna ApplicationArgs 1 // coin_o ASA id
 // asset_holding_get AssetBalance // stack, balance, opted-in
@@ -215,11 +261,8 @@ app_global_del
 delete_global_state_loop:
 
 // ni
-byte "n"
 load 10
-itob
-extract 7 1
-concat
+callsub get_ni
 store 16
 
 // ASA id
@@ -253,8 +296,15 @@ retsub
 ////////////////
 
 
-
-
+////////////////
+get_ni:
+byte "n"
+swap
+itob
+extract 7 1 // TODO if accept more than 9 assets
+concat
+retsub
+////////////////
 
 ///////////////
 // update
@@ -279,16 +329,18 @@ int 1
 ==
 assert
 
+// for now max 9 assets
+txn NumAssets
+int 10
+<
+assert
+
 // delete old state
 callsub delete_global_state
 
 // set n
 byte "n"
-txn NumAppArgs
-int 1
--
-int 2
-/
+txn NumAssets
 app_global_put
 
 // loop through all args to update global state
@@ -303,23 +355,21 @@ store 10
 
 handle_update_loop:
 
-// loop ix -> ApplicationArgs ix
-load 10
-int 2
-*
-int 1
-+
-store 11
-
 // ASA id
-load 11
-txnas ApplicationArgs
+load 10
+txnas Assets
 store 12
 
-// w
-load 11
+// assert SC is opted into ASA
+global CurrentApplicationAddress
+load 12
+asset_holding_get AssetBalance
 int 1
-+
+==
+assert
+
+// w
+load 10
 txnas ApplicationArgs
 btoi
 store 13
@@ -336,19 +386,14 @@ load 13
 app_global_put
 
 // set global[ni] = ASA id
-byte "n"
 load 10
-itob
-extract 7 1
-concat
+callsub get_ni
 load 12
 app_global_put
 
 // loop
-load 11
-int 2
-+
-txn NumAppArgs
+load 10
+txn NumAssets
 <
 bz handle_update_loop_end
 load 10
@@ -368,6 +413,12 @@ assert
 // done
 b approve
 ///////////////
+
+
+
+
+
+
 
 ///////////////
 // optin SC to ASA
@@ -390,7 +441,7 @@ global CurrentApplicationAddress
 itxn_field AssetReceiver
 int 0
 itxn_field AssetAmount
-txn Assets 0
+txna Assets 0
 itxn_field XferAsset
 itxn_submit
 
