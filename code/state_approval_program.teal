@@ -1,5 +1,14 @@
 // CODE NOT WORKING YET - WORK IN PROGRESS - IN GIT ONLY FOR SAFETY
 
+// scratch
+// 10 - loop ix
+// 11 - ApplicationArgs ix
+// 12 - ASA id
+// 13 - ASA w
+// 14 - sum w
+// 15 - n
+// 16 - ni
+
 #pragma version 6
 
 txn OnCompletion
@@ -45,15 +54,100 @@ byte "swap"
 ==
 bnz handle_swap
 
+txna ApplicationArgs 0
+byte "send"
+==
+bnz handle_send
+
 // Unexpected first arg
 b decline
 ////////////////
+
+////////////////
+// send coins from SC to another account
+// only creator
+handle_send:
+b decline
+////////////////
+
+
+////////////////
+get_n:
+int 0
+byte "n"
+app_global_get_ex
+int 1
+==
+bz retsub
+int 0
+retsub
+////////////////
+
+////////////////
+delete_global_state:
+
+// loop ix
+int 0
+store 10
+
+// n
+callsub get_n
+store 15
+
+// del n
+int 0
+byte "n"
+app_local_del
+
+delete_global_state_loop:
+
+// ni
+byte "n"
+load 10
+concat
+store 16
+
+// ASA id
+load 16
+app_global_get
+store 12
+
+// del global[ni]
+load 16
+app_local_del
+
+// del global[ASA id]
+load 12
+app_local_del
+
+// loop
+load 10
+int 1
++
+load 15
+<
+bnz delete_global_state_loop_end
+load 10
+int 1
++
+store 10
+b delete_global_state_loop
+
+delete_global_state_loop_end:
+retsub
+////////////////
+
+
+
+
 
 ///////////////
 // update
 // only creator can update
 // args: update ASA_1 w_1 ASA_2 w_2 ...
-// overwrite global[ASA_i] = w_i
+// delete all existing state
+// global[ASA_i] = w_i
+// global[n] = NumAppArgs
 // assert sum w_i == 1
 // if global[ASA_i] does not exist yet, set global[ASA_i] = w_i if global state space available
 handle_update:
@@ -70,10 +164,86 @@ int 1
 ==
 assert
 
-// loop through all args to update global state
-// loop through all weights (w_i) to assert that sum w_i == 1
-// NumAppArgs
+// delete old state
+callsub delete_global_state
 
+// set n
+byte "n"
+txn NumAppArgs
+app_global_put
+
+// loop through all args to update global state
+
+// sum w_i
+int 0
+store 14
+
+// loop ix
+int 0
+store 10
+
+handle_update_loop:
+
+// loop ix -> ApplicationArgs ix
+load 10
+int 2
+*
+int 1
++
+store 11
+
+// ASA id
+load 11
+txnas ApplicationArgs
+store 12
+
+// w
+load 11
+int 1
++
+txnas ApplicationArgs
+store 13
+
+// sum w
+load 13
+load 14
++
+store 14
+
+// set global[ASA id] = w
+load 12
+load 13
+app_global_put
+
+// set global[ni] = ASA id
+byte "n"
+load 10
+concat
+load 12
+app_global_put
+
+// loop
+load 11
+int 2
++
+txn NumAppArgs
+<
+bnz handle_update_loop_end
+load 10
+int 1
++
+store 10
+b handle_update_loop
+
+handle_update_loop_end:
+
+// check sum w
+load 14
+int 10000
+==
+assert
+
+// done
 b approve
 ///////////////
 
