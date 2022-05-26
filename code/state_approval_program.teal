@@ -87,7 +87,10 @@ dup // ASA id
 
 // stack, CurrentApplicationAddress, ASA id, ASA id
 
-bz get_balance_algo
+int 0
+itob
+==
+bnz get_balance_algo
 b get_balance_asa
 
 get_balance_algo:
@@ -96,6 +99,7 @@ balance
 retsub
 
 get_balance_asa:
+btoi
 asset_holding_get AssetBalance
 pop
 retsub
@@ -109,7 +113,10 @@ get_amount_i:
 
 load 12
 
-bz get_amount_i_algo
+int 0
+itob
+==
+bnz get_amount_i_algo
 b get_amount_i_asa
 
 get_amount_i_algo:
@@ -144,10 +151,12 @@ assert
 
 // ASA id i
 gtxn 0 XferAsset
+itob
 store 12
 
 // ASA id o
 txna Assets 0
+itob
 store 17
 
 // assert i xor o is n0
@@ -206,7 +215,10 @@ store 5
 
 // send
 load 17
-bz send_algo
+int 0
+itob
+==
+bnz send_algo
 b send_asa
 ///////////////
 

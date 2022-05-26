@@ -17,10 +17,13 @@ export A=NVVMVMEFGTLIVW3YL6R7ADZAWU66HUBNHI6OH264U5YKVZVPG67EMB5EWM
 
 goal app create --creator $CREATOR --approval-prog $SYSTEM_APPROVAL_FILE --clear-prog $SYSTEM_CLEAR_FILE --global-byteslices $N --global-ints $(($N+1)) --local-byteslices 0 --local-ints 0 --extra-pages 0 --on-completion OptIn -w $WALLET
 goal app info --app-id $SYSTEM_ID
+goal account info -a $SYSTEM_ACCOUNT
+goal account balance -a $SYSTEM_ACCOUNT
 
 goal asset create --creator $CREATOR --total 1000000000 --unitname NOVALUE --decimals 0 -w $WALLET
 goal app optin --app-id $SYSTEM_ID --from $A -w $WALLET
 goal asset send -a 20 --assetid $ASA -f $CREATOR -t $SYSTEM_ACCOUNT -w $WALLET
+goal asset send -a 30 --assetid $ASA_2 -f $CREATOR -t $SYSTEM_ACCOUNT -w $WALLET
 goal asset send -a 0 --assetid $ASA -f $A -t $A -w $WALLET
 
 goal app delete --app-id $SYSTEM_ID --from $CREATOR
