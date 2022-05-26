@@ -8,10 +8,13 @@
 // 15 - n
 // 16 - ni
 // 17 - ASA id o
+// 18 - ASA id n0
 // 0 - balance i
 // 1 - balance o
 // 2 - weight i
 // 3 - weight o
+// 4 - amount i
+// 5 - amount o
 
 #pragma version 6
 
@@ -74,6 +77,51 @@ b decline
 
 
 
+////////////////
+// stack, ASA id
+get_balance:
+
+global CurrentApplicationAddress
+swap
+dup // ASA id
+
+// stack, CurrentApplicationAddress, ASA id, ASA id
+
+bz get_balance_algo
+b get_balance_asa
+
+get_balance_algo:
+pop
+balance
+retsub
+
+get_balance_asa:
+asset_holding_get AssetBalance
+pop
+retsub
+////////////////
+
+
+
+////////////////
+// stack
+get_amount_i:
+
+load 12
+
+bz get_amount_i_algo
+b get_amount_i_asa
+
+get_amount_i_algo:
+gtxn 0 Amount
+retsub
+
+get_amount_i_asa:
+gtxn 0 AssetAmount
+retsub
+////////////////
+
+
 
 ///////////////
 // swap
@@ -94,38 +142,36 @@ int 1
 ==
 assert
 
-// ASA id and balance of coin_i
-gtxn 0 TypeEnum
-dup
-int pay
-==
-bnz handle_swap_balance_i_algo
-int axfer
-==
-bnz handle_swap_balance_i_asa
-b decline // not pay nor axfer is error
-
-handle_swap_balance_i_algo:
-
-pop // pop the dup
-
 // ASA id i
-int 0
+gtxn 0 XferAsset
 store 12
-
-// balance i
-global CurrentApplicationAddress
-balance
-store 0
 
 // ASA id o
 txna Assets 0
 store 17
 
-// balance o
-global CurrentApplicationAddress
+// assert i xor o is n0
+int 0
+callsub get_ni
+app_global_get
+store 18
+load 18
+load 12
+==
+load 18
 load 17
-asset_holding_get AssetBalance
+==
+^
+assert
+
+// balance i
+load 12
+callsub get_balance
+store 0
+
+// balance o
+load 17
+callsub get_balance
 store 1
 
 // weight i
@@ -138,88 +184,60 @@ load 17
 app_global_get
 store 3
 
-b handle_swap_continue
+// amount i
+get_amount_i
+store 4
 
-handle_swap_balance_i_asa:
+// amount o
+int 1
+load 0
+load 4
++
+load 0
+/
+load 2
+load 3
+/
+exp
+-
+load 1
+*
+store 5
 
-// ASA id
-gtxn 0 XferAsset
-store 12
-
-// balance i
-global CurrentApplicationAddress
-load 12
-asset_holding_get AssetBalance
-store 0
-
-b handle_swap_continue
-
-handle_swap_continue:
-
-// balance of coin_o
-// int 1 // acc 1 is SC account
-// txna ApplicationArgs 1 // coin_o ASA id
-// asset_holding_get AssetBalance // stack, balance, opted-in
-
-// // assert that we are opted into coin_o
-// int 1
-// ==
-// assert
-
-// store 1 // balance of coin_o
-
-// // weight of coin_i
-// int 0
-// gtxns XferAsset
-// app_global_get_ex // stack, weight, key exists
-
-// // assert that we have weight for this ASA
-// int 1
-// ==
-// assert
-
-// store 2 // weight coin_i
-
-// // weight of coin_o
-// int 0
-// txna ApplicationArgs 1 // coin_o ASA id
-// app_global_get_ex // stack, weight, key exists
-
-// // assert that we have weight for this ASA
-// int 1
-// ==
-// assert
-
-// store 3 // weight coin_o
-
-// // coin_i amount - TODO ALGO case - TODO remove swap fee
-// int 0
-// gtxns AssetAmount
-// store 4
-
-// // calc coin_o amount
-// int 1
-// load 0
-// load 4
-// +
-// load 0
-// /
-// load 2
-// load 3
-// /
-// exp
-// -
-// load 1
-// *
-
-// TODO send coin_o
-
-b approve
+// send
+load 17
+bz send_algo
+b send_asa
 ///////////////
 
 
+///////////////
+send_algo:
+itxn_begin
+int pay
+itxn_field TypeEnum
+txn Sender
+itxn_field Receiver
+load 5
+itxn_field Amount
+itxn_submit
+b approve
+///////////////
 
-
+///////////////
+send_asa:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+load 5
+itxn_field AssetAmount
+load 17
+itxn_field XferAsset
+itxn_submit
+b approve
+///////////////
 
 
 ////////////////
@@ -297,6 +315,7 @@ retsub
 
 
 ////////////////
+// stack, i
 get_ni:
 byte "n"
 swap
