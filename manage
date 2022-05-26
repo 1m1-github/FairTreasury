@@ -12,6 +12,7 @@ export SYSTEM_ID=92065044
 export SYSTEM_ACCOUNT=D5CHP2N2ZH4DW7MJIJT3AXIIV2XYCCZHP5CZJIWRPENDEEBPV53CTELJ64
 export N=3
 export ASA=91697272
+export ASA_2=92125658
 export A=NVVMVMEFGTLIVW3YL6R7ADZAWU66HUBNHI6OH264U5YKVZVPG67EMB5EWM
 
 goal app create --creator $CREATOR --approval-prog $SYSTEM_APPROVAL_FILE --clear-prog $SYSTEM_CLEAR_FILE --global-byteslices $N --global-ints $(($N+1)) --local-byteslices 0 --local-ints 0 --extra-pages 0 --on-completion OptIn -w $WALLET
@@ -31,7 +32,7 @@ goal clerk dryrun -t $TXNS_DIR/optin.stxn --dryrun-dump -o $TXNS_DIR/optin_dryru
 tealdbg debug $SYSTEM_APPROVAL_FILE -d $TXNS_DIR/optin_dryrun.json
 
 // update - first asset is dao token - rest are ccy tokens - all swaps are dao vs ccy
-goal app call --from=$CREATOR --app-id=$SYSTEM_ID --app-arg="str:update" --foreign-asset $ASA --foreign-asset 0 --app-arg="int:5000" --app-arg="int:5000" -w $WALLET --out=$TXNS_DIR/update.stxn
+goal app call --from=$CREATOR --app-id=$SYSTEM_ID --app-arg="str:update" --foreign-asset $ASA --foreign-asset 0 --foreign-asset $ASA_2 --app-arg="int:9000" --app-arg="int:500" --app-arg="int:500" -w $WALLET --out=$TXNS_DIR/update.stxn
 goal clerk dryrun -t $TXNS_DIR/update.stxn --dryrun-dump -o $TXNS_DIR/update_dryrun.json
 tealdbg debug $SYSTEM_APPROVAL_FILE -d $TXNS_DIR/update_dryrun.json
 

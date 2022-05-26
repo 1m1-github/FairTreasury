@@ -185,7 +185,7 @@ app_global_get
 store 3
 
 // amount i
-get_amount_i
+callsub get_amount_i
 store 4
 
 // amount o
@@ -325,6 +325,25 @@ concat
 retsub
 ////////////////
 
+////////////////
+// stack, ASA id
+assert_sc_opted_into_asa:
+
+dup
+bz assert_sc_opted_into_asa_end
+
+global CurrentApplicationAddress
+swap
+asset_holding_get AssetBalance
+int 1
+==
+assert
+
+assert_sc_opted_into_asa_end:
+pop
+retsub
+////////////////
+
 ///////////////
 // update
 // only creator can update
@@ -380,15 +399,13 @@ txnas Assets
 store 12
 
 // assert SC is opted into ASA
-global CurrentApplicationAddress
 load 12
-asset_holding_get AssetBalance
-int 1
-==
-assert
+callsub assert_sc_opted_into_asa
 
 // w
 load 10
+int 1
++
 txnas ApplicationArgs
 btoi
 store 13
@@ -401,6 +418,7 @@ store 14
 
 // set global[ASA id] = w
 load 12
+itob
 load 13
 app_global_put
 
@@ -408,17 +426,18 @@ app_global_put
 load 10
 callsub get_ni
 load 12
+itob
 app_global_put
 
 // loop
 load 10
-txn NumAssets
-<
-bz handle_update_loop_end
-load 10
 int 1
 +
 store 10
+load 10
+txn NumAssets
+<
+bz handle_update_loop_end
 b handle_update_loop
 
 handle_update_loop_end:
