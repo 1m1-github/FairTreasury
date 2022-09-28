@@ -61,4 +61,6 @@ the SC will expose $log$, $exp$, $pow$ and other mathematical functions via the 
 ## watch a stream of the implementation
 https://www.youtube.com/watch?v=b6HxYjvkTj4
 
+## notes
+
 * the Solidity implementation speaks of 18 decimal precision using 256bit values ~ Algorand currently allows 512bit values ~ we are assuming, for now, that doubling the precision of the intermediary values will double the precision of the result ~ to be calculated ~ the 512bit max was given by an Algorand internal dev and remains to be confirmed; dev is highly capable
