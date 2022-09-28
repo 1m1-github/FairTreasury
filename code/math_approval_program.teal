@@ -1,0 +1,98 @@
+#pragma version 7
+
+txn OnCompletion
+int NoOp
+==
+bnz handle_noop
+
+txn OnCompletion
+int OptIn
+==
+b approve
+
+txn OnCompletion
+int CloseOut
+==
+b approve
+
+txn OnCompletion
+int UpdateApplication
+==
+b approve
+
+txn OnCompletion
+int DeleteApplication
+==
+b approve
+
+// Unexpected OnCompletion value. Should be unreachable.
+b decline
+////////////////
+
+handle_noop:
+
+// params
+int 50
+store 1 // B_i
+int 100
+store 2 // B_o
+int 10
+store 3 // A_i
+int 20
+store 4 // w_i
+int 80
+store 5 // w_o
+
+
+
+b approve
+
+// math
+
+math_params:
+byte 0xde0b6b3a7640000 // 1e18
+store 6 // 1e18
+byte c097ce7bc907180000000000000000 // 1e36
+store 7 // 1e36
+
+byte 0xde0b6b3a7640000 // 1e18
+byte "1e18"
+app_global_put
+
+byte "1e18"
+app_global_get // 1e18
+// stack ... 1e18
+
+byte "1e18"
+app_global_get_ex // 1e18, x
+// stack ... 1e18, x
+bz decline
+
+// value["1e18"]
+
+// stack x is int512
+_ln_36:
+load 6 // 1e18
+b* // x *= 1e18
+load 7 // 1e36
+- // x - 1e36
+load 7 // 1e36
+// stack 
+* // (x - 1e36) * 1e36
+
+
+
+
+// powUp end
+
+
+////////////////
+// end branches
+decline:
+int 0
+return
+
+approve:
+int 1
+return
+////////////////

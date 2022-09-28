@@ -13,7 +13,7 @@ export SYSTEM_ACCOUNT=D5CHP2N2ZH4DW7MJIJT3AXIIV2XYCCZHP5CZJIWRPENDEEBPV53CTELJ64
 export N=3
 export ASA=91697272
 export ASA_2=92125658
-export A=NVVMVMEFGTLIVW3YL6R7ADZAWU66HUBNHI6OH264U5YKVZVPG67EMB5EWM
+export A=ALY3RE2FTSTQTD7DF3ITV7UGYSNQ47V2FMREGT3EOWHFJFEWT6I5WX2I24
 
 goal app create --creator $CREATOR --approval-prog $SYSTEM_APPROVAL_FILE --clear-prog $SYSTEM_CLEAR_FILE --global-byteslices $N --global-ints $(($N+1)) --local-byteslices 0 --local-ints 0 --extra-pages 0 --on-completion OptIn -w $WALLET
 goal app info --app-id $SYSTEM_ID

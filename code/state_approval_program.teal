@@ -16,7 +16,7 @@
 // 4 - amount i
 // 5 - amount o
 
-#pragma version 6
+#pragma version 7
 
 txn OnCompletion
 int NoOp
