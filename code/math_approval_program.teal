@@ -1,3 +1,12 @@
+// https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
+// sha(LogExpMath.sol) = 599b0cd8f744e1eabef3600d79a2c2b0aea3ddcb
+// https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
+// sha(FixedPoint.sol) = 5aa5a86c9ab4e1b0d55825e487e8366787bd5e01
+// https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/Math.sol
+// sha(Math.sol) = 5aa5a86c9ab4e1b0d55825e487e8366787bd5e01
+// https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol
+// sha(WeightedMath.sol) = 592b0534f782b9bfb668990f7821e041a9b775d4
+
 #pragma version 7
 
 txn OnCompletion
@@ -55,21 +64,6 @@ store 6 // 1e18
 byte c097ce7bc907180000000000000000 // 1e36
 store 7 // 1e36
 
-byte 0xde0b6b3a7640000 // 1e18
-byte "1e18"
-app_global_put
-
-byte "1e18"
-app_global_get // 1e18
-// stack ... 1e18
-
-byte "1e18"
-app_global_get_ex // 1e18, x
-// stack ... 1e18, x
-bz decline
-
-// value["1e18"]
-
 // stack x is int512
 _ln_36:
 load 6 // 1e18
@@ -95,4 +89,111 @@ return
 approve:
 int 1
 return
+////////////////
+
+
+////////////////
+// scratch
+////////////////
+
+// 0..127 ~ reserved
+// 128..255 ~ tmp
+
+byte 0xde0b6b3a7640000 // 1e18
+store 0 // 1e18
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0xc097ce7bc907180000000000000000 // 1e36
+store 2 // 1e36
+
+byte 0x70c1cc73b00c80000 // 130e18
+store 3 // 130e18
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+byte 0x56bc75e2d63100000 // 1e20
+store 1 // 1e20
+
+////////////////
+// scratch
 ////////////////
