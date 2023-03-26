@@ -1,11 +1,14 @@
-# AlgoTreasury
+= FairTreasury
 buyback and make machine for Algorand
 
-## idea
+== idea
 
 based on
 - blog: https://www.placeholder.vc/blog/2020/9/17/stop-burning-tokens-buyback-and-make-instead
 - whitepaper: https://balancer.fi/whitepaper.pdf
+
+depends on
+https://github.com/algorandfoundation/specs/pull/79
 
 this smart contract (SC) is:
 - a treasury for a project (coin issuance pool)
